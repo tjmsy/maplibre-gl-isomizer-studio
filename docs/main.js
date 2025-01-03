@@ -1,11 +1,11 @@
-import { generateStyle } from "https://cdn.jsdelivr.net/gh/tjmsy/maplibre-gl-isomizer/src/generateStyle.js";
-import { addImages } from "https://cdn.jsdelivr.net/gh/tjmsy/maplibre-gl-isomizer/src/addImages.js";
+import { generateStyle } from "https://cdn.jsdelivr.net/gh/tjmsy/maplibre-gl-isomizer@v0.1.0/src/generateStyle.js";
+import { addImages } from "https://cdn.jsdelivr.net/gh/tjmsy/maplibre-gl-isomizer@v0.1.0/src/addImages.js";
 
 const yamlFiles = {
-  designPlan: "https://cdn.jsdelivr.net/gh/tjmsy/isomizer-projectfiles/ofm-isom/design-plan.yml",
-  symbolPalette: "https://cdn.jsdelivr.net/gh/tjmsy/isomizer-projectfiles/ofm-isom/palettes/symbol-palette.yml",
-  colorPalette: "https://cdn.jsdelivr.net/gh/tjmsy/isomizer-projectfiles/ofm-isom/palettes/color-palette.yml",
-  svgPalette: "https://cdn.jsdelivr.net/gh/tjmsy/isomizer-projectfiles/ofm-isom/palettes/svg-palette.yml",
+  designPlan: "https://cdn.jsdelivr.net/gh/tjmsy/isomizer-projectfiles/projects/ofm-isom/design-plan.yml",
+  symbolPalette: "https://cdn.jsdelivr.net/gh/tjmsy/isomizer-projectfiles/palettes/isom2017/symbol-palette.yml",
+  colorPalette: "https://cdn.jsdelivr.net/gh/tjmsy/isomizer-projectfiles/palettes/isom2017/color-palette.yml",
+  svgPalette: "https://cdn.jsdelivr.net/gh/tjmsy/isomizer-projectfiles/palettes/isom2017/svg-palette.yml",
 };
 
 let yamlData = {};
