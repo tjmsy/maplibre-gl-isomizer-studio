@@ -2,7 +2,7 @@ import { generateStyle } from "https://cdn.jsdelivr.net/gh/tjmsy/maplibre-gl-iso
 import { addImages } from "https://cdn.jsdelivr.net/gh/tjmsy/maplibre-gl-isomizer@v0.1.0/src/addImages.js";
 
 const yamlFiles = {
-  designPlan: "https://cdn.jsdelivr.net/gh/tjmsy/isomizer-projectfiles/projects/ofm-isom/design-plan.yml",
+  designPlan: "https://cdn.jsdelivr.net/gh/tjmsy/isomizer-projectfiles/projects/global/design-plan.yml",
   symbolPalette: "https://cdn.jsdelivr.net/gh/tjmsy/isomizer-projectfiles/palettes/isom2017/symbol-palette.yml",
   colorPalette: "https://cdn.jsdelivr.net/gh/tjmsy/isomizer-projectfiles/palettes/isom2017/color-palette.yml",
   svgPalette: "https://cdn.jsdelivr.net/gh/tjmsy/isomizer-projectfiles/palettes/isom2017/svg-palette.yml",
