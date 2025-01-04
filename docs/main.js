@@ -1,4 +1,4 @@
-import { generateStyle } from "https://cdn.jsdelivr.net/gh/tjmsy/maplibre-gl-isomizer@v0.1.0/src/generateStyle.js";
+import { generateStyle } from "https://cdn.jsdelivr.net/gh/tjmsy/maplibre-gl-isomizer@v0.1.1/src/generateStyle.js";
 import { addImages } from "https://cdn.jsdelivr.net/gh/tjmsy/maplibre-gl-isomizer@v0.1.0/src/addImages.js";
 
 const yamlFiles = {
