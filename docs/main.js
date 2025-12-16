@@ -1,5 +1,5 @@
-import { generateStyle } from "https://cdn.jsdelivr.net/gh/tjmsy/maplibre-gl-isomizer/src/generateStyle.js";
-import { addImages } from "https://cdn.jsdelivr.net/gh/tjmsy/maplibre-gl-isomizer/src/addImages.js";
+import { generateStyle } from "https://cdn.jsdelivr.net/gh/tjmsy/maplibre-gl-isomizer@0.2.0/src/generateStyle.js";
+import { addImages } from "https://cdn.jsdelivr.net/gh/tjmsy/maplibre-gl-isomizer@0.2.0/src/addImages.js";
 
 const yamlFiles = {
   designPlan: "https://cdn.jsdelivr.net/gh/tjmsy/isomizer-projectfiles/projects/global/design-plan.yml",
