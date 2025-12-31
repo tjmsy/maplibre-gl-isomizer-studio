@@ -1,5 +1,7 @@
 import { generateStyle } from "https://cdn.jsdelivr.net/gh/tjmsy/maplibre-gl-isomizer@0.3/src/generateStyle.js";
 import { addImages } from "https://cdn.jsdelivr.net/gh/tjmsy/maplibre-gl-isomizer@0.3/src/addImages.js";
+import { addSources } from "https://cdn.jsdelivr.net/gh/tjmsy/maplibre-gl-isomizer@0.3/src/addSources.js";
+import { addLayers } from "https://cdn.jsdelivr.net/gh/tjmsy/maplibre-gl-isomizer@0.3/src/addLayers.js";
 
 const yamlFiles = {
   designPlan:
@@ -13,6 +15,11 @@ const yamlFiles = {
 };
 
 let yamlData = {};
+let map;
+
+/* -------------------------
+ * YAML load / save
+ * ------------------------- */
 
 async function loadYamlFiles(files) {
   const loaders = Object.entries(files).map(async ([key, path]) => {
@@ -41,6 +48,10 @@ async function saveProjectAsZip() {
   URL.revokeObjectURL(url);
 }
 
+/* -------------------------
+ * Style generation
+ * ------------------------- */
+
 function getYaml(key) {
   return jsyaml.load(yamlData[key]);
 }
@@ -55,8 +66,12 @@ function updateStyle() {
   );
 }
 
-async function initializeMap(style) {
-  const demSource = await new mlcontour.DemSource({
+/* -------------------------
+ * Map helpers
+ * ------------------------- */
+
+async function setupContourSource(map) {
+  const demSource = new mlcontour.DemSource({
     url: "https://tiles.gsj.jp/tiles/elev/land/{z}/{y}/{x}.png",
     encoding: "numpng",
     maxzoom: 15,
@@ -64,9 +79,46 @@ async function initializeMap(style) {
     cacheSize: 100,
     timeoutMs: 10_000,
   });
+
   await demSource.setupMaplibre(maplibregl);
 
-  const map = await new maplibregl.Map({
+  if (!map.getSource("contour-source")) {
+    map.addSource("contour-source", {
+      type: "vector",
+      tiles: [
+        demSource.contourProtocolUrl({
+          thresholds: {
+            5: [2560, 12800],
+            6: [1280, 6400],
+            7: [640, 3200],
+            8: [320, 1600],
+            9: [160, 800],
+            10: [80, 400],
+            11: [40, 200],
+            12: [20, 100],
+            13: [10, 50],
+            14: [5, 25],
+          },
+          contourLayer: "contours",
+          elevationKey: "ele",
+          levelKey: "level",
+          extent: 4096,
+          buffer: 1,
+        }),
+      ],
+      maxzoom: 15,
+      attribution:
+        "<a href='https://tiles.gsj.jp/tiles/elev/tiles.html#land' target='_blank'>産総研 シームレス標高タイル(陸域統合DEM)</a>",
+    });
+  }
+}
+
+/* -------------------------
+ * Map lifecycle
+ * ------------------------- */
+
+async function initializeMap() {
+  const map = new maplibregl.Map({
     container: "map",
     style: {
       version: 8,
@@ -77,38 +129,34 @@ async function initializeMap(style) {
     zoom: 1,
     hash: true,
   });
-  await addImages(map, getYaml("imagePalette")["image-palette"]);
 
-  map.addSource("contour-source", {
-    type: "vector",
-    tiles: [
-      demSource.contourProtocolUrl({
-        thresholds: {
-          5: [2560, 12800],
-          6: [1280, 6400],
-          7: [640, 3200],
-          8: [320, 1600],
-          9: [160, 800],
-          10: [80, 400],
-          11: [40, 200],
-          12: [20, 100],
-          13: [10, 50],
-          14: [5, 25],
-        },
-        contourLayer: "contours",
-        elevationKey: "ele",
-        levelKey: "level",
-        extent: 4096,
-        buffer: 1,
-      }),
-    ],
-    maxzoom: 15,
-    attribution:
-      "<a href='https://tiles.gsj.jp/tiles/elev/tiles.html#land' target='_blank'>産総研 シームレス標高タイル(陸域統合DEM)</a>",
-  });
+  await addImages(map, getYaml("imagePalette")["image-palette"]);
+  await addSources(map, getYaml("designPlan")["sources"]);
+  await setupContourSource(map);
+
+  const style = await updateStyle();
+  await addLayers(map, style.layers);
 
   return map;
 }
+
+async function updateImages(map) {
+  map.getStyle().layers.forEach((layer) => {
+    if (map.getLayer(layer.id)) map.removeLayer(layer.id);
+  });
+
+  map.listImages().forEach((id) => map.removeImage(id));
+
+  const imagePalette = jsyaml.load(yamlData["imagePalette"])["image-palette"];
+  await addImages(map, imagePalette);
+
+  const newStyle = await updateStyle();
+  await addLayers(map, newStyle.layers);
+}
+
+/* -------------------------
+ * Editor / UI
+ * ------------------------- */
 
 function updateEditor(content, readOnly = false) {
   const editor = document.getElementById("text-editor");
@@ -142,24 +190,52 @@ function setActiveTab(tabId) {
   document.getElementById(tabId).classList.add("active");
 }
 
+/* -------------------------
+ * Tab handlers
+ * ------------------------- */
+
+const yamlKeyMapping = {
+  "tab-design-plan": "designPlan",
+  "tab-symbol-palette": "symbolPalette",
+  "tab-color-palette": "colorPalette",
+  "tab-image-palette": "imagePalette",
+  "tab-style": null,
+};
+
+const tabHandlers = {
+  "tab-design-plan": async () => {
+    const newStyle = await updateStyle();
+    map.setStyle({ version: 8, sources: {}, layers: [] });
+    await addSources(map, getYaml("designPlan")["sources"]);
+    await setupContourSource(map);
+    await addLayers(map, newStyle.layers);
+  },
+  "tab-image-palette": async () => {
+    await updateImages(map);
+  },
+  default: async () => {
+    const newStyle = await updateStyle();
+    newStyle.layers.forEach((layer) => {
+      if (map.getLayer(layer.id)) map.removeLayer(layer.id);
+    });
+    await addLayers(map, newStyle.layers);
+  },
+};
+
 async function handleEditorInput() {
   const activeTab = document.querySelector(".tab.active").id;
-  const tabMapping = {
-    "tab-design-plan": "designPlan",
-    "tab-symbol-palette": "symbolPalette",
-    "tab-color-palette": "colorPalette",
-    "tab-image-palette": "imagePalette",
-    "tab-style": null,
-  };
+  const yamlKey = yamlKeyMapping[activeTab];
+  if (!yamlKey) return;
 
-  const yamlKey = tabMapping[activeTab];
-  if (yamlKey) {
-    yamlData[yamlKey] = document.getElementById("text-editor").value;
+  yamlData[yamlKey] = document.getElementById("text-editor").value;
 
-    const newStyle = await updateStyle();
-    map.setStyle(newStyle);
-  }
+  const handler = tabHandlers[activeTab] || tabHandlers["default"];
+  await handler();
 }
+
+/* -------------------------
+ * Bootstrap
+ * ------------------------- */
 
 document
   .getElementById("text-editor")
@@ -172,6 +248,5 @@ document.querySelectorAll(".tab").forEach((tab) => {
 document.getElementById("save-zip").addEventListener("click", saveProjectAsZip);
 
 await loadYamlFiles(yamlFiles);
-const initialStyle = await updateStyle();
-const map = await initializeMap(initialStyle);
+map = await initializeMap();
 switchTab("tab-design-plan");
