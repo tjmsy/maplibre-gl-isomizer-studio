@@ -9,7 +9,8 @@
     />
     <script src="https://unpkg.com/maplibre-gl/dist/maplibre-gl.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
-    <script src="https://unpkg.com/maplibre-contour@0.1.0/dist/index.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/qchizu/maplibre-contour-adding-Numerical-PNG-Tile@main/dist/index.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
     <link rel="stylesheet" href="./style.css" />
     <title>ISOMizer Studio beta demo</title>
   </head>
@@ -23,6 +24,7 @@
         <div class="tab" id="tab-color-palette">Color Palette</div>
         <div class="tab" id="tab-svg-palette">SVG Palette</div>
         <div class="tab" id="tab-style">generated Style</div>
+        <div><button id="save-zip">Save ZIP</button></div>
       </div>
       <div id="text-editor-container">
         <textarea id="text-editor"></textarea>
