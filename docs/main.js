@@ -7,7 +7,7 @@ import { addLayers } from "https://cdn.jsdelivr.net/gh/tjmsy/maplibre-gl-isomize
  * Constants
  * ------------------------- */
 
-const yamlFiles = {
+const sampleYamlUrls = {
   designPlan:
     "https://cdn.jsdelivr.net/gh/tjmsy/isomizer-projectfiles/projects/global/design-plan.yml",
   symbolPalette:
@@ -140,7 +140,7 @@ async function loadProjectFromZip(file) {
   projectConfig = jsyaml.load(configText);
 
   await loadYamlFilesFromZip(zip);
-  await renderMap(RenderMode.FULL);
+  await renderMap(RenderMode.FULL, { useProjectView: true });
   await switchTab("tab-design-plan");
 }
 
@@ -182,15 +182,8 @@ async function setupContourSource(map) {
       tiles: [
         demSource.contourProtocolUrl({
           thresholds: {
-            5: [2560, 12800],
-            6: [1280, 6400],
-            7: [640, 3200],
-            8: [320, 1600],
-            9: [160, 800],
             10: [80, 400],
-            11: [40, 200],
             12: [20, 100],
-            13: [10, 50],
             14: [5, 25],
           },
           contourLayer: "contours",
@@ -200,11 +193,20 @@ async function setupContourSource(map) {
           buffer: 1,
         }),
       ],
-      maxzoom: 15,
+      maxzoom: 12,
       attribution:
         "<a href='https://tiles.gsj.jp/tiles/elev/tiles.html#land' target='_blank'>産総研 シームレス標高タイル(陸域統合DEM)</a>",
     });
   }
+}
+
+function getViewState(map) {
+  return {
+    center: map.getCenter().toArray(),
+    zoom: map.getZoom(),
+    bearing: map.getBearing(),
+    pitch: map.getPitch(),
+  };
 }
 
 /* -------------------------
@@ -223,8 +225,8 @@ async function initializeBlankMap() {
   });
 }
 
-async function initializeMap() {
-  const mapSettings = projectConfig?.map ?? {};
+async function initializeMap(viewState = null) {
+  const mapSettings = viewState ?? projectConfig?.map ?? {};
 
   const map = new maplibregl.Map({
     container: "map",
@@ -258,12 +260,16 @@ async function updateImages(map) {
   await addLayers(map, style.layers);
 }
 
-async function renderMap(mode = RenderMode.STYLE_ONLY) {
+async function renderMap(mode = RenderMode.STYLE_ONLY, options = {}) {
   if (!canRender()) return;
 
   if (mode === RenderMode.FULL) {
+    const useProjectView = options.useProjectView === true;
+
+    const viewState = !useProjectView && map ? getViewState(map) : null;
+
     if (map) map.remove();
-    map = await initializeMap();
+    map = await initializeMap(viewState);
     return;
   }
 
@@ -350,8 +356,9 @@ document
 document.getElementById("save-zip").addEventListener("click", saveProjectAsZip);
 
 document.getElementById("load-sample").addEventListener("click", async () => {
-  await loadYamlFiles(yamlFiles);
-  await renderMap(RenderMode.FULL);
+  await loadYamlFiles(sampleYamlUrls);
+
+  await renderMap(RenderMode.FULL, { useProjectView: true });
   await switchTab("tab-design-plan");
 });
 
