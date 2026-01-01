@@ -36,6 +36,7 @@ const RenderMode = {
  * ------------------------- */
 
 let map = null;
+let projectConfig = null;
 
 const yamlState = {
   designPlan: { text: "", parsed: null },
@@ -126,6 +127,9 @@ async function loadProjectFromZip(file) {
     return;
   }
 
+  const configText = await zip.file("project-config.yml").async("text");
+  projectConfig = jsyaml.load(configText);
+
   await loadYamlFilesFromZip(zip);
   await renderMap(RenderMode.FULL);
   await switchTab("tab-design-plan");
@@ -197,11 +201,15 @@ async function setupContourSource(map) {
  * ------------------------- */
 
 async function initializeMap() {
+  const mapSettings = projectConfig?.map ?? {};
+
   const map = new maplibregl.Map({
     container: "map",
     style: { version: 8, sources: {}, layers: [] },
-    center: [0, 0],
-    zoom: 1,
+    center: mapSettings.center ?? [0, 0],
+    zoom: mapSettings.zoom ?? 1,
+    bearing: mapSettings.bearing ?? 0,
+    pitch: mapSettings.pitch ?? 0,
     hash: true,
   });
 
