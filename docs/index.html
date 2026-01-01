@@ -17,6 +17,7 @@
   <body>
     <div id="map"></div>
     <div id="resizer"></div>
+
     <div id="text-editor-wrapper">
       <div class="tab-container">
         <div class="tab active" id="tab-design-plan">Design Plan</div>
@@ -24,13 +25,23 @@
         <div class="tab" id="tab-color-palette">Color Palette</div>
         <div class="tab" id="tab-image-palette">Image Palette</div>
         <div class="tab" id="tab-style">generated Style</div>
-        <div><button id="save-zip">Save ZIP</button></div>
-        <div><button id="load-zip">load ZIP</button></div>
+
+        <div>
+          <button id="load-sample">Load Sample</button>
+        </div>
+        <div>
+          <button id="load-zip">Load ZIP</button>
+        </div>
+        <div>
+          <button id="save-zip">Save ZIP</button>
+        </div>
       </div>
+
       <div id="text-editor-container">
         <textarea id="text-editor"></textarea>
       </div>
     </div>
+
     <script src="./resizer.js"></script>
     <script type="module" src="./main.js"></script>
   </body>

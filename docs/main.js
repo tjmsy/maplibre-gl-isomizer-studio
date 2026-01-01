@@ -58,6 +58,15 @@ function getYamlParsed(key) {
   return yamlState[key].parsed;
 }
 
+function canRender() {
+  return (
+    yamlState.designPlan.parsed &&
+    yamlState.symbolPalette.parsed &&
+    yamlState.colorPalette.parsed &&
+    yamlState.imagePalette.parsed
+  );
+}
+
 async function loadYamlFiles(files) {
   await Promise.all(
     Object.entries(files).map(async ([key, url]) => {
@@ -140,6 +149,8 @@ async function loadProjectFromZip(file) {
  * ------------------------- */
 
 function updateStyle() {
+  if (!canRender()) return null;
+
   const { rules, sources } = getYamlParsed("designPlan");
   return generateStyle(
     rules,
@@ -200,6 +211,18 @@ async function setupContourSource(map) {
  * Map lifecycle
  * ------------------------- */
 
+async function initializeBlankMap() {
+  if (map) map.remove();
+
+  map = new maplibregl.Map({
+    container: "map",
+    style: { version: 8, sources: {}, layers: [] },
+    center: [0, 0],
+    zoom: 1,
+    hash: true,
+  });
+}
+
 async function initializeMap() {
   const mapSettings = projectConfig?.map ?? {};
 
@@ -236,6 +259,8 @@ async function updateImages(map) {
 }
 
 async function renderMap(mode = RenderMode.STYLE_ONLY) {
+  if (!canRender()) return;
+
   if (mode === RenderMode.FULL) {
     if (map) map.remove();
     map = await initializeMap();
@@ -317,25 +342,28 @@ async function handleEditorInput() {
 document
   .getElementById("text-editor")
   .addEventListener("input", handleEditorInput);
+
 document
   .querySelectorAll(".tab")
   .forEach((t) => t.addEventListener("click", () => switchTab(t.id)));
+
 document.getElementById("save-zip").addEventListener("click", saveProjectAsZip);
 
-const zipInput = document.createElement("input");
-zipInput.type = "file";
-zipInput.accept = ".zip";
-zipInput.style.display = "none";
-zipInput.addEventListener("change", (e) => {
-  if (e.target.files[0]) loadProjectFromZip(e.target.files[0]);
+document.getElementById("load-sample").addEventListener("click", async () => {
+  await loadYamlFiles(yamlFiles);
+  await renderMap(RenderMode.FULL);
+  await switchTab("tab-design-plan");
 });
-document.body.appendChild(zipInput);
 
-const loadButton = document.createElement("button");
-loadButton.textContent = "Load ZIP";
-loadButton.addEventListener("click", () => zipInput.click());
-document.body.appendChild(loadButton);
+document.getElementById("load-zip").addEventListener("click", () => {
+  const input = document.createElement("input");
+  input.type = "file";
+  input.accept = ".zip";
+  input.onchange = (e) => {
+    if (e.target.files[0]) loadProjectFromZip(e.target.files[0]);
+  };
+  input.click();
+});
 
-await loadYamlFiles(yamlFiles);
-map = await initializeMap();
+await initializeBlankMap();
 switchTab("tab-design-plan");
