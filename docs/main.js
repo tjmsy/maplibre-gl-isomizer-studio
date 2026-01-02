@@ -7,16 +7,7 @@ import { addLayers } from "https://cdn.jsdelivr.net/gh/tjmsy/maplibre-gl-isomize
  * Constants
  * ------------------------- */
 
-const sampleYamlUrls = {
-  designPlan:
-    "https://cdn.jsdelivr.net/gh/tjmsy/isomizer-projectfiles/projects/global/design-plan.yml",
-  symbolPalette:
-    "https://cdn.jsdelivr.net/gh/tjmsy/isomizer-projectfiles/palettes/isom2017/symbol-palette.yml",
-  colorPalette:
-    "https://cdn.jsdelivr.net/gh/tjmsy/isomizer-projectfiles/palettes/isom2017/color-palette.yml",
-  imagePalette:
-    "https://cdn.jsdelivr.net/gh/tjmsy/isomizer-projectfiles/palettes/isom2017/image-palette.yml",
-};
+const sampleProjectUrl = "https://cdn.jsdelivr.net/gh/tjmsy/isomizer-projectfiles@0.3/projects/global/project-config.yml";
 
 const fileToYamlKey = {
   "design-plan.yml": "designPlan",
@@ -64,16 +55,6 @@ function canRender() {
     yamlState.symbolPalette.parsed &&
     yamlState.colorPalette.parsed &&
     yamlState.imagePalette.parsed
-  );
-}
-
-async function loadYamlFiles(files) {
-  await Promise.all(
-    Object.entries(files).map(async ([key, url]) => {
-      const res = await fetch(url);
-      const text = await res.text();
-      setYaml(key, text);
-    })
   );
 }
 
@@ -140,6 +121,34 @@ async function loadProjectFromZip(file) {
   projectConfig = jsyaml.load(configText);
 
   await loadYamlFilesFromZip(zip);
+  await renderMap(RenderMode.FULL, { useProjectView: true });
+  await switchTab("tab-design-plan");
+}
+
+function resolveProjectResourceUrl(baseUrl, file) {
+  if (/^https?:\/\//.test(file)) {
+    return file;
+  }
+  return baseUrl + file;
+}
+
+async function loadProjectFromUrl(url) {
+  const res = await fetch(url);
+  const text = await res.text();
+  projectConfig = jsyaml.load(text);
+
+  const baseUrl = url.replace(/\/[^/]+$/, "/");
+
+  const resources = projectConfig.resources ?? {};
+
+  for (const [key, { file }] of Object.entries(resources)) {
+    const yamlKey = key.replace(/-([a-z])/g, (_, c) => c.toUpperCase());
+    const resourceUrl = resolveProjectResourceUrl(baseUrl, file);
+    const res = await fetch(resourceUrl);
+    const text = await res.text();
+    setYaml(yamlKey, text);
+  }
+
   await renderMap(RenderMode.FULL, { useProjectView: true });
   await switchTab("tab-design-plan");
 }
@@ -228,7 +237,7 @@ async function initializeBlankMap() {
 async function initializeMap(viewState = null) {
   const mapSettings = viewState ?? projectConfig?.map ?? {};
 
-  const map = new maplibregl.Map({
+  map = new maplibregl.Map({
     container: "map",
     style: { version: 8, sources: {}, layers: [] },
     center: mapSettings.center ?? [0, 0],
@@ -341,6 +350,11 @@ async function handleEditorInput() {
   }
 }
 
+function getProjectConfigUrlFromQuery() {
+  const query = new URLSearchParams(window.location.search);
+  return query.get("project");
+}
+
 /* -------------------------
  * Bootstrap
  * ------------------------- */
@@ -356,8 +370,7 @@ document
 document.getElementById("save-zip").addEventListener("click", saveProjectAsZip);
 
 document.getElementById("load-sample").addEventListener("click", async () => {
-  await loadYamlFiles(sampleYamlUrls);
-
+  await loadProjectFromUrl(sampleProjectUrl);
   await renderMap(RenderMode.FULL, { useProjectView: true });
   await switchTab("tab-design-plan");
 });
@@ -373,4 +386,10 @@ document.getElementById("load-zip").addEventListener("click", () => {
 });
 
 await initializeBlankMap();
-switchTab("tab-design-plan");
+const projectUrl = getProjectConfigUrlFromQuery();
+
+if (projectUrl) {
+  await loadProjectFromUrl(projectUrl);
+} else {
+  switchTab("tab-design-plan");
+}
