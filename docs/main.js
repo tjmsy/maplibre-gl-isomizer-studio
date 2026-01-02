@@ -177,7 +177,7 @@ async function setupContourSource(map) {
   const demSource = new mlcontour.DemSource({
     url: "https://tiles.gsj.jp/tiles/elev/land/{z}/{y}/{x}.png",
     encoding: "numpng",
-    maxzoom: 15,
+    maxzoom: 12,
     worker: true,
     cacheSize: 100,
     timeoutMs: 10_000,
@@ -202,7 +202,7 @@ async function setupContourSource(map) {
           buffer: 1,
         }),
       ],
-      maxzoom: 12,
+      maxzoom: 14,
       attribution:
         "<a href='https://tiles.gsj.jp/tiles/elev/tiles.html#land' target='_blank'>産総研 シームレス標高タイル(陸域統合DEM)</a>",
     });
